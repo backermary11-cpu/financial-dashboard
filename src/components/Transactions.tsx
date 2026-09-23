@@ -9,7 +9,7 @@ import {
   transactionsToCsv,
 } from '../lib/finance'
 import type { AppData, Ledger, Transaction } from '../lib/types'
-import { download } from '../lib/ui-helpers'
+import { canDownload, download } from '../lib/ui-helpers'
 import { Card } from './ui'
 
 const PAGE = 50
@@ -101,9 +101,11 @@ export function Transactions({
           <button className="btn" onClick={() => fileRef.current?.click()}>
             Import CSV
           </button>
-          <button className="btn" onClick={() => download(`${ledger}-transactions.csv`, transactionsToCsv(filtered))}>
-            Export CSV
-          </button>
+          {canDownload && (
+            <button className="btn" onClick={() => download(`${ledger}-transactions.csv`, transactionsToCsv(filtered))}>
+              Export CSV
+            </button>
+          )}
         </div>
         <p className="sub" style={{ color: 'var(--muted)', fontSize: '0.8rem' }}>
           CSV columns: <code>date, description, category, amount</code> (or <code>debit</code>/<code>credit</code>). Dates as

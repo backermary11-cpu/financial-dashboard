@@ -3,7 +3,8 @@ import { Budgets } from './components/Budgets'
 import { Dashboard } from './components/Dashboard'
 import { Investments } from './components/Investments'
 import { Transactions } from './components/Transactions'
-import { download } from './lib/ui-helpers'
+import logo from './assets/logo.svg'
+import { canDownload, download } from './lib/ui-helpers'
 import { sampleData } from './lib/sampleData'
 import { useAppData } from './lib/storage'
 import type { Ledger } from './lib/types'
@@ -37,6 +38,8 @@ export default function App() {
   const [tab, setTab] = useState<Tab>(() => readPref<Tab>('fd:tab', 'dashboard'))
   const [ledger, setLedger] = useState<Ledger>(() => readPref<Ledger>('fd:ledger', 'personal'))
   const [theme, setTheme] = useState<Theme>(() => readPref<Theme>('fd:theme', 'system'))
+  const [pending, setPending] = useState<'sample' | 'clear' | null>(null)
+  const [notice, setNotice] = useState<string | null>(null)
 
   useEffect(() => writePref('fd:tab', tab), [tab])
   useEffect(() => writePref('fd:ledger', ledger), [ledger])
@@ -49,19 +52,20 @@ export default function App() {
   function exportAll() {
     download(`financial-dashboard-backup-${new Date().toISOString().slice(0, 10)}.json`, JSON.stringify(data, null, 2), 'application/json')
   }
-  function resetSample() {
-    if (confirm('Replace all your data with the sample data? Export a backup first if you want to keep it.')) setData(sampleData())
-  }
-  function clearAll() {
-    if (confirm('Delete all transactions, budgets and holdings from this browser?')) setData({ transactions: [], budgets: [], holdings: [] })
+  function confirmPending() {
+    if (pending === 'sample') setData(sampleData())
+    if (pending === 'clear') setData({ transactions: [], budgets: [], holdings: [] })
+    setNotice(pending === 'sample' ? 'Sample data loaded.' : 'All data cleared.')
+    setPending(null)
   }
   async function importBackup(file: File) {
     try {
       const parsed = JSON.parse(await file.text())
       if (!Array.isArray(parsed.transactions)) throw new Error('missing transactions')
       setData({ transactions: parsed.transactions, budgets: parsed.budgets ?? [], holdings: parsed.holdings ?? [] })
+      setNotice('Backup restored.')
     } catch {
-      alert('That file is not a Financial Dashboard backup.')
+      setNotice('That file is not a Financial Dashboard backup. Choose a .json file made with "Back up (JSON)".')
     }
   }
 
@@ -69,7 +73,7 @@ export default function App() {
     <div className="app">
       <header className="topbar">
         <div className="brand">
-          <img src="/favicon.svg" alt="" />
+          <img src={logo} alt="" />
           Financial Dashboard
         </div>
         {tab !== 'investments' && (
@@ -105,29 +109,50 @@ export default function App() {
       </main>
 
       <footer className="footer">
-        <span>Data is stored only in this browser.</span>
-        <button className="btn ghost" onClick={exportAll}>
-          Back up (JSON)
-        </button>
-        <label className="btn ghost">
-          Restore backup
-          <input
-            type="file"
-            accept="application/json,.json"
-            hidden
-            onChange={(e) => {
-              const f = e.target.files?.[0]
-              if (f) void importBackup(f)
-              e.target.value = ''
-            }}
-          />
-        </label>
-        <button className="btn ghost" onClick={resetSample}>
-          Load sample data
-        </button>
-        <button className="btn ghost danger" onClick={clearAll}>
-          Clear all data
-        </button>
+        {pending ? (
+          <>
+            <span role="alert">
+              {pending === 'sample'
+                ? 'Replace all your data with the sample data?'
+                : 'Delete all transactions, budgets and holdings from this browser?'}{' '}
+              This can’t be undone{canDownload ? ' — back up first to keep a copy' : ''}.
+            </span>
+            <button className="btn primary" onClick={confirmPending}>
+              {pending === 'sample' ? 'Replace with sample data' : 'Delete everything'}
+            </button>
+            <button className="btn" onClick={() => setPending(null)}>
+              Cancel
+            </button>
+          </>
+        ) : (
+          <>
+            <span>{notice ?? 'Data is stored only in this browser.'}</span>
+            {canDownload && (
+              <button className="btn ghost" onClick={exportAll}>
+                Back up (JSON)
+              </button>
+            )}
+            <label className="btn ghost">
+              Restore backup
+              <input
+                type="file"
+                accept="application/json,.json"
+                hidden
+                onChange={(e) => {
+                  const f = e.target.files?.[0]
+                  if (f) void importBackup(f)
+                  e.target.value = ''
+                }}
+              />
+            </label>
+            <button className="btn ghost" onClick={() => setPending('sample')}>
+              Load sample data
+            </button>
+            <button className="btn ghost danger" onClick={() => setPending('clear')}>
+              Clear all data
+            </button>
+          </>
+        )}
       </footer>
     </div>
   )

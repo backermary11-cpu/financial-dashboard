@@ -6,6 +6,9 @@ export function statusColor(state: BudgetState) {
   return STATUS_COLOR[state]
 }
 
+/** False in the claude.ai preview build, where the host blocks file downloads. */
+export const canDownload = import.meta.env.VITE_NO_DOWNLOADS !== '1'
+
 export function download(filename: string, text: string, type = 'text/csv') {
   const url = URL.createObjectURL(new Blob([text], { type }))
   const a = document.createElement('a')
