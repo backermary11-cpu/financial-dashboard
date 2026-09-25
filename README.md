@@ -2,7 +2,14 @@
 
 A dashboard for personal and business finances: income, expenses, budgets and investments. It runs entirely in the browser, with no server of its own.
 
-**Where data is saved:** when the app is opened as a claude.ai artifact, data syncs privately to the viewer's claude.ai account and follows them to any device (`src/lib/sync.ts`). When it's self-hosted (Vercel, Netlify and so on), data is saved in the browser's `localStorage`.
+**Installable:** it's a web app (PWA), so you can add it to a phone's home screen. It then opens full screen, works offline, and has an "Install app" button where the browser supports it.
+
+**Where data is saved:**
+- On the hosted app, users sign in with an emailed code and data syncs through **Supabase** (`src/lib/supabaseSync.ts`).
+- As a claude.ai artifact, data syncs to the viewer's claude.ai account (`src/lib/sync.ts`).
+- Without either, data stays in the browser's `localStorage`.
+
+**→ Step-by-step setup: [docs/SETUP.md](docs/SETUP.md)**
 
 ## Features
 
@@ -32,13 +39,14 @@ The app starts with generated sample data. Use **Clear all data** in the footer 
 
 ```bash
 npm install
+cp .env.example .env.local   # optional: add Supabase keys to test sync
 npm run dev        # http://localhost:5173
 npm test           # unit tests (Vitest)
 npm run lint       # oxlint
 npm run build      # type-check and production build to dist/
 ```
 
-Stack: React 19, TypeScript, Vite, Recharts, PapaParse and Vitest.
+Stack: React 19, TypeScript, Vite, Recharts, PapaParse, Supabase and Vitest.
 
 ```
 src/
@@ -62,6 +70,5 @@ GitHub Actions (`.github/workflows/ci.yml`) runs lint, tests and the build on ev
 
 ## Not included yet
 
-- Self-hosted copies don't sync across devices. That needs a backend, for example Supabase. The claude.ai version already syncs.
 - No live bank connection. That needs a provider such as Plaid and API keys.
 - No live stock prices. That needs a market-data API key.

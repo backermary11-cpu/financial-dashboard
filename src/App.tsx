@@ -6,7 +6,10 @@ import { Transactions } from './components/Transactions'
 import logo from './assets/logo.svg'
 import { canDownload, download } from './lib/ui-helpers'
 import { sampleData } from './lib/sampleData'
-import { useAppData, type SyncStatus } from './lib/storage'
+import { hasClaudeRuntime, useAppData, type SyncStatus } from './lib/storage'
+import { supabase, useSession } from './lib/supabase'
+import { Account } from './components/Account'
+import { InstallButton } from './components/InstallButton'
 import type { Ledger } from './lib/types'
 
 type Tab = 'dashboard' | 'transactions' | 'budgets' | 'investments'
@@ -22,14 +25,14 @@ const SYNC_LABEL: Record<SyncStatus, string> = {
   connecting: 'Connecting…',
   synced: 'Synced to your account',
   saving: 'Saving…',
-  local: 'Saved in this browser',
-  error: 'Not synced — saved in this browser',
+  local: 'Saved on this device',
+  error: 'Not synced — saved on this device',
 }
 const SYNC_HINT: Record<SyncStatus, string> = {
   connecting: 'Looking for your saved data.',
-  synced: 'Your data is saved privately to your claude.ai account and appears on any device where you open this link.',
+  synced: 'Your data is saved privately to your account and appears on every device where you use it.',
   saving: 'Saving your changes to your account.',
-  local: 'Your data is stored only in this browser.',
+  local: 'Your data is stored only on this device.',
   error: 'Could not reach your account. Changes are kept in this browser and will sync after your next edit.',
 }
 
@@ -49,7 +52,9 @@ function writePref(key: string, value: string) {
 }
 
 export default function App() {
-  const [data, setData, syncStatus] = useAppData()
+  const { session, ready: sessionReady } = useSession()
+  const [data, setData, syncStatus] = useAppData(session?.user.id ?? null)
+  const accountsEnabled = !!supabase && !hasClaudeRuntime()
   const [tab, setTab] = useState<Tab>(() => readPref<Tab>('fd:tab', 'dashboard'))
   const [ledger, setLedger] = useState<Ledger>(() => readPref<Ledger>('fd:ledger', 'personal'))
   const [theme, setTheme] = useState<Theme>(() => readPref<Theme>('fd:theme', 'system'))
@@ -105,11 +110,9 @@ export default function App() {
           <span className="dot" aria-hidden="true" />
           {SYNC_LABEL[syncStatus]}
         </span>
-        <select className="input" value={theme} onChange={(e) => setTheme(e.target.value as Theme)} aria-label="Theme">
-          <option value="system">System theme</option>
-          <option value="light">Light</option>
-          <option value="dark">Dark</option>
-        </select>
+        {accountsEnabled && (
+          <Account session={session} onSignOut={() => setData({ transactions: [], budgets: [], holdings: [] })} />
+        )}
       </header>
 
       <nav className="tabs" role="tablist">
@@ -121,7 +124,7 @@ export default function App() {
       </nav>
 
       <main>
-        {syncStatus === 'connecting' ? (
+        {syncStatus === 'connecting' || !sessionReady ? (
           <div className="empty">Loading your data…</div>
         ) : (
           <>
@@ -151,7 +154,10 @@ export default function App() {
           </>
         ) : (
           <>
-            <span>{notice ?? SYNC_HINT[syncStatus === 'saving' ? 'synced' : syncStatus]}</span>
+            <span>{notice ??
+                (accountsEnabled && !session
+                  ? 'Saved on this device only. Sign in to sync across devices.'
+                  : SYNC_HINT[syncStatus === 'saving' ? 'synced' : syncStatus])}</span>
             {canDownload && (
               <button className="btn ghost" onClick={exportAll}>
                 Back up (JSON)
@@ -170,6 +176,12 @@ export default function App() {
                 }}
               />
             </label>
+            {!hasClaudeRuntime() && <InstallButton />}
+            <select className="input" value={theme} onChange={(e) => setTheme(e.target.value as Theme)} aria-label="Theme">
+          <option value="system">System theme</option>
+          <option value="light">Light</option>
+          <option value="dark">Dark</option>
+        </select>
             <button className="btn ghost" onClick={() => setPending('sample')}>
               Load sample data
             </button>

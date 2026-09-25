@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { sampleData } from './sampleData'
+import { supabase } from './supabase'
+import { SupabaseSync, type SupabaseLike } from './supabaseSync'
 import { AccountSync } from './sync'
 import type { AppData } from './types'
 
@@ -27,22 +29,29 @@ function saveLocal(data: AppData) {
 }
 
 /**
- * - `local`: saved in this browser only (e.g. when self-hosted).
+ * - `local`: saved on this device only.
  * - `connecting`: checking for an account to sync with.
- * - `synced` / `saving`: data lives in the viewer's claude.ai account.
- * - `error`: account sync failed; changes are kept in this browser.
+ * - `synced` / `saving`: data lives in the viewer's account (claude.ai or Supabase).
+ * - `error`: sync failed (e.g. offline); changes are kept on this device and retried.
  */
 export type SyncStatus = 'local' | 'connecting' | 'synced' | 'saving' | 'error'
 
+interface SyncEngine {
+  start(getLocal: () => AppData): Promise<void>
+  stop(): void
+  schedule(data: AppData): void
+}
+
 /**
- * App state. Always cached in localStorage; when the page runs as a claude.ai
- * artifact it is also synced to the viewer's private account storage so it
- * follows them across browsers and devices.
+ * App state. Always cached in localStorage, and synced to an account when one
+ * is available: the viewer's claude.ai storage when running as an artifact,
+ * otherwise the signed-in Supabase user (`supabaseUserId`).
  */
-export function useAppData() {
+export function useAppData(supabaseUserId: string | null = null) {
   const [data, setDataState] = useState<AppData>(loadLocal)
-  const [status, setStatus] = useState<SyncStatus>(() => (hasClaudeRuntime() ? 'connecting' : 'local'))
-  const syncRef = useRef<AccountSync | null>(null)
+  const [status, setStatus] = useState<SyncStatus>('connecting')
+  const syncing = hasClaudeRuntime() || !!(supabase && supabaseUserId)
+  const syncRef = useRef<SyncEngine | null>(null)
   const dataRef = useRef(data)
 
   useEffect(() => {
@@ -51,24 +60,29 @@ export function useAppData() {
   }, [data])
 
   useEffect(() => {
-    if (!hasClaudeRuntime()) return
+    const claude = hasClaudeRuntime()
+    if (!claude && !(supabase && supabaseUserId)) return
     let cancelled = false
-    const sync = new AccountSync({
-      onRemote: (remote) => {
+    const cb = {
+      onRemote: (remote: AppData) => {
         if (!cancelled) setDataState(remote)
       },
-      onStatus: (s) => {
+      onStatus: (s: SyncStatus) => {
         if (!cancelled) setStatus(s)
       },
-    })
+    }
+    const sync: SyncEngine = claude
+      ? new AccountSync(cb)
+      : new SupabaseSync(supabase as unknown as SupabaseLike, supabaseUserId!, cb)
     syncRef.current = sync
     void sync.start(() => dataRef.current)
     return () => {
       cancelled = true
       sync.stop()
       syncRef.current = null
+      setStatus('connecting')
     }
-  }, [])
+  }, [supabaseUserId])
 
   const setData = useCallback((next: AppData | ((d: AppData) => AppData)) => {
     setDataState((prev) => {
@@ -78,9 +92,9 @@ export function useAppData() {
     })
   }, [])
 
-  return [data, setData, status] as const
+  return [data, setData, syncing ? status : ('local' as SyncStatus)] as const
 }
 
-function hasClaudeRuntime(): boolean {
+export function hasClaudeRuntime(): boolean {
   return typeof window !== 'undefined' && typeof (window as { claude?: { use?: unknown } }).claude?.use === 'function'
 }

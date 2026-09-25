@@ -199,6 +199,10 @@ select {
   display: grid;
   gap: 16px;
 }
+.stack > *,
+.grid > * {
+  min-width: 0;
+}
 
 /* ---------- stat tiles ---------- */
 .stat .label {
@@ -286,6 +290,7 @@ select.input {
 /* ---------- tables ---------- */
 .table-wrap {
   overflow-x: auto;
+  position: relative;
 }
 table {
   width: 100%;
@@ -444,10 +449,16 @@ details summary {
 }
 .sr-only {
   position: absolute;
+  top: 0;
+  left: 0;
   width: 1px;
   height: 1px;
+  margin: -1px;
+  padding: 0;
+  border: 0;
   overflow: hidden;
   clip: rect(0 0 0 0);
+  white-space: nowrap;
 }
 
 /* ---------- sync status ---------- */
@@ -473,4 +484,42 @@ details summary {
 }
 .sync-error .dot {
   background: var(--critical);
+}
+
+/* ---------- account ---------- */
+.account-panel {
+  flex-basis: 100%;
+  order: 10;
+}
+
+/* ---------- phone: app-style bottom tab bar ---------- */
+@media (max-width: 700px) {
+  .app {
+    padding-bottom: calc(96px + env(safe-area-inset-bottom, 0px));
+  }
+  .tabs {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 20;
+    margin: 0;
+    gap: 0;
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+    border-bottom: none;
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+    overflow: visible;
+  }
+  .tab {
+    flex: 1;
+    padding: 14px 4px 12px;
+    font-size: 0.8rem;
+    border-bottom: none;
+    border-top: 2px solid transparent;
+  }
+  .tab[aria-selected='true'] {
+    border-top-color: var(--accent);
+    color: var(--accent);
+  }
 }

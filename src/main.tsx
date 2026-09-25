@@ -8,3 +8,10 @@ createRoot(document.getElementById('root')!).render(
     <App />
   </StrictMode>,
 )
+
+// Offline support for the hosted app. Skipped in dev and inside claude.ai, which hosts its own copy.
+if (import.meta.env.PROD && 'serviceWorker' in navigator && !('claude' in window)) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js').catch(() => {})
+  })
+}
