@@ -70,7 +70,7 @@ export default function App() {
   }, [theme])
 
   function exportAll() {
-    download(`financial-dashboard-backup-${new Date().toISOString().slice(0, 10)}.json`, JSON.stringify(data, null, 2), 'application/json')
+    download(`blazynumb-backup-${new Date().toISOString().slice(0, 10)}.json`, JSON.stringify(data, null, 2), 'application/json')
   }
   function confirmPending() {
     if (pending === 'sample') setData(sampleData())
@@ -85,7 +85,7 @@ export default function App() {
       setData({ transactions: parsed.transactions, budgets: parsed.budgets ?? [], holdings: parsed.holdings ?? [] })
       setNotice('Backup restored.')
     } catch {
-      setNotice('That file is not a Financial Dashboard backup. Choose a .json file made with "Back up (JSON)".')
+      setNotice('That file is not a blazynumb backup. Choose a .json file made with "Back up (JSON)".')
     }
   }
 
@@ -94,7 +94,7 @@ export default function App() {
       <header className="topbar">
         <div className="brand">
           <img src={logo} alt="" />
-          Financial Dashboard
+          blazynumb
         </div>
         {tab !== 'investments' && (
           <div className="segmented" role="group" aria-label="Ledger">

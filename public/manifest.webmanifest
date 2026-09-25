@@ -1,6 +1,6 @@
 {
-  "name": "Financial Dashboard",
-  "short_name": "Finances",
+  "name": "blazynumb",
+  "short_name": "blazynumb",
   "description": "Track personal and business income, expenses, budgets and investments.",
   "id": "/",
   "start_url": "/",

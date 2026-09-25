@@ -1,6 +1,6 @@
-# Financial Dashboard
+# blazynumb
 
-A dashboard for personal and business finances: income, expenses, budgets and investments. It runs entirely in the browser, with no server of its own.
+blazynumb is a dashboard for personal and business finances: income, expenses, budgets and investments. It runs entirely in the browser, with no server of its own.
 
 **Installable:** it's a web app (PWA), so you can add it to a phone's home screen. It then opens full screen, works offline, and has an "Install app" button where the browser supports it.
 

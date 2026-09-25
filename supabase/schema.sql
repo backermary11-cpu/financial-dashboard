@@ -1,4 +1,4 @@
--- Financial Dashboard: run this once in Supabase → SQL Editor → New query → Run.
+-- blazynumb: run this once in Supabase → SQL Editor → New query → Run.
 -- One row per user holding their whole dashboard as JSON. Row-level security
 -- means each signed-in user can only ever read or write their own row.
 
