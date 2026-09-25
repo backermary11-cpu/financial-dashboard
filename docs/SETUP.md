@@ -19,6 +19,8 @@ About 15 minutes, no coding. You'll create two free accounts:
    ```
 
    Click **Save**.
+
+   Can't find it? Skip this step. Supabase's default email has a sign-in link instead of a code, and tapping it signs you in on the device where you tap it. The one catch: on iPhone the link opens Safari instead of the installed app, so with the default email, sign in once in Safari first. The code works everywhere, so it's worth adding later.
 6. Go to **Project Settings → API** and keep that tab open. You'll need two values from it in step 2:
    - **Project URL**, like `https://abcd1234.supabase.co`
    - **anon public** key, a long string starting with `eyJ` (or `sb_publishable_`)

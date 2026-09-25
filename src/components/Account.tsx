@@ -77,7 +77,7 @@ export function Account({ session, onSignOut }: { session: Session | null; onSig
           {step === 'email' && (
             <form onSubmit={sendCode}>
               <h2>Sign in to sync</h2>
-              <p className="sub">We’ll email you a 6-digit code. No password needed. New here? This creates your account.</p>
+              <p className="sub">We’ll email you a sign-in code (or link). No password needed. New here? This creates your account.</p>
               <div className="toolbar" style={{ marginBottom: 0 }}>
                 <input
                   id="account-email"
@@ -100,7 +100,10 @@ export function Account({ session, onSignOut }: { session: Session | null; onSig
           {step === 'code' && (
             <form onSubmit={verify}>
               <h2>Check your email</h2>
-              <p className="sub">Enter the code we sent to {email.trim()}.</p>
+              <p className="sub">
+                We sent an email to {email.trim()}. Enter the 6-digit code from it, or just tap the sign-in link in the
+                email on this device.
+              </p>
               <div className="toolbar" style={{ marginBottom: 0 }}>
                 <input
                   id="account-code"
