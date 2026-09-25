@@ -6,7 +6,7 @@ import { Transactions } from './components/Transactions'
 import logo from './assets/logo.svg'
 import { canDownload, download } from './lib/ui-helpers'
 import { sampleData } from './lib/sampleData'
-import { useAppData } from './lib/storage'
+import { useAppData, type SyncStatus } from './lib/storage'
 import type { Ledger } from './lib/types'
 
 type Tab = 'dashboard' | 'transactions' | 'budgets' | 'investments'
@@ -17,6 +17,21 @@ const TABS: { id: Tab; label: string }[] = [
   { id: 'investments', label: 'Investments' },
 ]
 type Theme = 'system' | 'light' | 'dark'
+
+const SYNC_LABEL: Record<SyncStatus, string> = {
+  connecting: 'Connecting…',
+  synced: 'Synced to your account',
+  saving: 'Saving…',
+  local: 'Saved in this browser',
+  error: 'Not synced — saved in this browser',
+}
+const SYNC_HINT: Record<SyncStatus, string> = {
+  connecting: 'Looking for your saved data.',
+  synced: 'Your data is saved privately to your claude.ai account and appears on any device where you open this link.',
+  saving: 'Saving your changes to your account.',
+  local: 'Your data is stored only in this browser.',
+  error: 'Could not reach your account. Changes are kept in this browser and will sync after your next edit.',
+}
 
 function readPref<T extends string>(key: string, fallback: T): T {
   try {
@@ -34,7 +49,7 @@ function writePref(key: string, value: string) {
 }
 
 export default function App() {
-  const [data, setData] = useAppData()
+  const [data, setData, syncStatus] = useAppData()
   const [tab, setTab] = useState<Tab>(() => readPref<Tab>('fd:tab', 'dashboard'))
   const [ledger, setLedger] = useState<Ledger>(() => readPref<Ledger>('fd:ledger', 'personal'))
   const [theme, setTheme] = useState<Theme>(() => readPref<Theme>('fd:theme', 'system'))
@@ -86,6 +101,10 @@ export default function App() {
             </button>
           </div>
         )}
+        <span className={`sync sync-${syncStatus}`} title={SYNC_HINT[syncStatus]} role="status">
+          <span className="dot" aria-hidden="true" />
+          {SYNC_LABEL[syncStatus]}
+        </span>
         <select className="input" value={theme} onChange={(e) => setTheme(e.target.value as Theme)} aria-label="Theme">
           <option value="system">System theme</option>
           <option value="light">Light</option>
@@ -102,10 +121,16 @@ export default function App() {
       </nav>
 
       <main>
+        {syncStatus === 'connecting' ? (
+          <div className="empty">Loading your data…</div>
+        ) : (
+          <>
         {tab === 'dashboard' && <Dashboard data={data} ledger={ledger} onGoTo={setTab} />}
         {tab === 'transactions' && <Transactions data={data} ledger={ledger} setData={setData} />}
         {tab === 'budgets' && <Budgets data={data} ledger={ledger} setData={setData} />}
         {tab === 'investments' && <Investments data={data} setData={setData} />}
+          </>
+        )}
       </main>
 
       <footer className="footer">
@@ -126,7 +151,7 @@ export default function App() {
           </>
         ) : (
           <>
-            <span>{notice ?? 'Data is stored only in this browser.'}</span>
+            <span>{notice ?? SYNC_HINT[syncStatus === 'saving' ? 'synced' : syncStatus]}</span>
             {canDownload && (
               <button className="btn ghost" onClick={exportAll}>
                 Back up (JSON)

@@ -1,6 +1,8 @@
 # Financial Dashboard
 
-A dashboard for personal and business finances: income, expenses, budgets and investments. It runs entirely in the browser. There is no server, and data is saved in the browser's `localStorage`.
+A dashboard for personal and business finances: income, expenses, budgets and investments. It runs entirely in the browser, with no server of its own.
+
+**Where data is saved:** when the app is opened as a claude.ai artifact, data syncs privately to the viewer's claude.ai account and follows them to any device (`src/lib/sync.ts`). When it's self-hosted (Vercel, Netlify and so on), data is saved in the browser's `localStorage`.
 
 ## Features
 
@@ -43,7 +45,8 @@ src/
   lib/finance.ts        # pure calculations: totals, monthly series, budgets, portfolio, CSV
   lib/finance.test.ts   # unit tests
   lib/sampleData.ts     # deterministic demo data
-  lib/storage.ts        # localStorage persistence
+  lib/storage.ts        # state hook: localStorage cache + account sync
+  lib/sync.ts           # syncs to the viewer's private claude.ai account storage
   components/           # Dashboard, Transactions, Budgets, Investments, shared UI
 ```
 
@@ -59,6 +62,6 @@ GitHub Actions (`.github/workflows/ci.yml`) runs lint, tests and the build on ev
 
 ## Not included yet
 
-- Data stays in one browser and doesn't sync across devices. Adding that needs a backend and database, for example Supabase or a small Node API with Postgres.
+- Self-hosted copies don't sync across devices. That needs a backend, for example Supabase. The claude.ai version already syncs.
 - No live bank connection. That needs a provider such as Plaid and API keys.
 - No live stock prices. That needs a market-data API key.

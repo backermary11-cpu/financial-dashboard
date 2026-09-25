@@ -449,3 +449,28 @@ details summary {
   overflow: hidden;
   clip: rect(0 0 0 0);
 }
+
+/* ---------- sync status ---------- */
+.sync {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.82rem;
+  color: var(--text-2);
+  white-space: nowrap;
+}
+.sync .dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--muted);
+}
+.sync-synced .dot {
+  background: var(--good);
+}
+.sync-saving .dot {
+  background: var(--warning);
+}
+.sync-error .dot {
+  background: var(--critical);
+}
